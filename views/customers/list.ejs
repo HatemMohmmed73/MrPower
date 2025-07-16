@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
+      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
+    </div>
+    <ul class="sidebar-nav">
+      <% if (permissions.includes('FullAccess')) { %>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/invoices">Invoices</a></li>
+        <li><a href="/customers" class="active">Customers</a></li>
+        <li><a href="/stock">Stock</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/admin">Admin Panel</a></li>
+      <% } else { %>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <% if (permissions.includes('AddInvoice') || permissions.includes('DownloadInvoice') || permissions.includes('PrintInvoice') || permissions.includes('CreateInvoice') || permissions.includes('ManageInvoice')) { %>
+          <li><a href="/invoices">Invoices</a></li>
+        <% } %>
+        <% if (permissions.includes('SearchClient') || permissions.includes('ManageCustomer')) { %>
+          <li><a href="/customers" class="active">Customers</a></li>
+        <% } %>
+        <% if (permissions.includes('AddPurchasedItem') || permissions.includes('ManageStock')) { %>
+          <li><a href="/stock">Stock</a></li>
+        <% } %>
+        <% if (permissions.includes('ViewReports')) { %>
+          <li><a href="/reports">Reports</a></li>
+        <% } %>
+        <% if (permissions.includes('FullAccess')) { %>
+          <li><a href="/admin">Admin Panel</a></li>
+        <% } %>
+      <% } %>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="dashboard-header">
+      <h2>Customer Management</h2>
+      <% if (permissions && (permissions.includes('ManageCustomer') || permissions.includes('FullAccess'))) { %>
+        <a href="/customers/add" class="btn-primary" style="margin-left:2rem;">+ Add Customer</a>
+      <% } %>
+    </div>
+    <div class="dashboard-cards">
+      <div class="card" style="width:100%;">
+        <form method="get" action="/customers" style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center;">
+          <input type="text" name="q" value="<%= q %>" placeholder="Search by name, phone, or email..." style="flex:1;padding:0.6rem 1rem;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;">
+          <button type="submit" class="btn-primary" style="margin:0;">Search</button>
+        </form>
+        <table style="width:100%;margin-top:1rem;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
+          <thead style="background:#222;color:#ff2d2d;">
+            <tr>
+              <th>Full Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Address</th>
+              <th>Billing</th>
+              <% if (permissions && (permissions.includes('ManageCustomer') || permissions.includes('FullAccess'))) { %>
+                <th>Actions</th>
+              <% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% customers.forEach(function(c) { %>
+              <tr>
+                <td><%= c.FullName %></td>
+                <td><%= c.Phone %></td>
+                <td><%= c.Email %></td>
+                <td><%= c.Address %></td>
+                <td><a href="/customers/<%= c.CustomerID %>/billing" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Billing History</a></td>
+                <% if (permissions && (permissions.includes('ManageCustomer') || permissions.includes('FullAccess'))) { %>
+                  <td>
+                    <a href="/customers/<%= c.CustomerID %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
+                    <form action="/customers/<%= c.CustomerID %>/delete" method="post" style="display:inline;">
+                      <button type="submit" class="btn-danger" style="margin-left:0.5rem;padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this customer? This will also delete related bills.');">Delete</button>
+                    </form>
+                  </td>
+                <% } %>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 

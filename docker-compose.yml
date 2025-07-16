@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: mrpower
+      POSTGRES_PASSWORD: mrpowerpass
+      POSTGRES_DB: mrpowerdb
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - mrpower-net
+
+  app:
+    build: .
+    command: node src/app.js
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - '3000:3000'
+    environment:
+      DB_HOST: db
+      DB_USER: mrpower
+      DB_PASS: mrpowerpass
+      DB_NAME: mrpowerdb
+      DB_PORT: 5432
+      SESSION_SECRET: mrpowersecret
+    depends_on:
+      - db
+    networks:
+      - mrpower-net
+
+volumes:
+  db_data:
+
+networks:
+  mrpower-net:
+    driver: bridge 

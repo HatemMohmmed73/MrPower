@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
+      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/login" class="active">Login</a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="dashboard-header">
+      <h2>Login</h2>
+    </div>
+    <div class="dashboard-cards">
+      <div class="card" style="max-width: 400px; margin: 0 auto;">
+        <% if (error_msg) { %>
+          <div class="alert alert-danger" style="background:#ff4f4f;color:#fff;padding:0.7rem 1rem;border-radius:8px;margin-bottom:1rem;"> <%= error_msg %> </div>
+        <% } %>
+        <form action="/login" method="POST">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+          </div>
+          <button type="submit" class="btn-primary">Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 

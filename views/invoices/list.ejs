@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoices | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
+      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
+    </div>
+    <ul class="sidebar-nav">
+      <% if (permissions.includes('FullAccess')) { %>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/invoices" class="active">Invoices</a></li>
+        <li><a href="/customers">Customers</a></li>
+        <li><a href="/stock">Stock</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/admin">Admin Panel</a></li>
+      <% } else { %>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <% if (permissions.includes('AddInvoice') || permissions.includes('DownloadInvoice') || permissions.includes('PrintInvoice') || permissions.includes('CreateInvoice') || permissions.includes('ManageInvoice')) { %>
+          <li><a href="/invoices" class="active">Invoices</a></li>
+        <% } %>
+        <% if (permissions.includes('SearchClient') || permissions.includes('ManageCustomer')) { %>
+          <li><a href="/customers">Customers</a></li>
+        <% } %>
+        <% if (permissions.includes('AddPurchasedItem') || permissions.includes('ManageStock')) { %>
+          <li><a href="/stock">Stock</a></li>
+        <% } %>
+        <% if (permissions.includes('ViewReports')) { %>
+          <li><a href="/reports">Reports</a></li>
+        <% } %>
+        <% if (permissions.includes('FullAccess')) { %>
+          <li><a href="/admin">Admin Panel</a></li>
+        <% } %>
+      <% } %>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="dashboard-header">
+      <h2>Invoice Management</h2>
+      <% if (permissions && (permissions.includes('AddInvoice') || permissions.includes('CreateInvoice') || permissions.includes('ManageInvoice') || permissions.includes('FullAccess'))) { %>
+        <a href="/invoices/create" class="btn-primary" style="margin-left:2rem;">+ Create Invoice</a>
+      <% } %>
+    </div>
+    <div class="dashboard-cards">
+      <div class="card" style="width:100%;">
+        <form method="get" action="/invoices" style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center;">
+          <input type="text" name="q" value="<%= q %>" placeholder="Search by bill number..." style="flex:1;padding:0.6rem 1rem;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;">
+          <button type="submit" class="btn-primary" style="margin:0;">Search</button>
+        </form>
+        <table style="width:100%;margin-top:1rem;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
+          <thead style="background:#222;color:#ff2d2d;">
+            <tr>
+              <th>Bill Number</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% bills.forEach(function(bill) { %>
+              <tr>
+                <td><%= bill.BillNumber %></td>
+                <td><%= bill.Customer ? bill.Customer.FullName : '' %></td>
+                <td><%= bill.BillDate ? bill.BillDate.toISOString().slice(0,10) : '' %></td>
+                <td><%= bill.TotalAmount %></td>
+                <td><%= bill.Status %></td>
+                <td>
+                  <% if (permissions && (permissions.includes('ManageInvoice') || permissions.includes('FullAccess'))) { %>
+                    <a href="/invoices/<%= bill.BillID %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
+                  <% } %>
+                  <% if (permissions && (permissions.includes('DownloadInvoice') || permissions.includes('FullAccess'))) { %>
+                    <a href="/invoices/<%= bill.BillID %>/download" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Download</a>
+                  <% } %>
+                  <% if (permissions && (permissions.includes('PrintInvoice') || permissions.includes('FullAccess'))) { %>
+                    <a href="/invoices/<%= bill.BillID %>/print" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Print</a>
+                  <% } %>
+                  <% if (permissions && permissions.includes('DeleteInvoice') && user.Username !== 'Ahmed') { %>
+                    <form action="/invoices/<%= bill.BillID %>/delete" method="post" style="display:inline;">
+                      <button type="submit" class="btn-danger" style="margin-left:0.5rem;padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this invoice?');">Delete</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Print Invoice | MR Power System</title>
+  <style>
+    body { background: #000; color: #fff; font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 30px auto; background: #181818; padding: 2.5rem 2rem; border-radius: 16px; box-shadow: 0 2px 16px rgba(255,45,45,0.10); border: 2px solid #ff2d2d; }
+    .brand-header { text-align: center; margin-bottom: 2rem; }
+    .brand-header img { max-width: 180px; margin-bottom: 0.5rem; }
+    .brand-header .brand-main { font-size: 2.2rem; font-weight: 900; color: #ff2d2d; letter-spacing: 2px; text-transform: uppercase; }
+    .brand-header .brand-accent { font-size: 2.2rem; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+    h2 { text-align: center; color: #ff2d2d; font-size: 2rem; font-weight: 900; margin-bottom: 1.5rem; text-transform: uppercase; }
+    .info { margin-bottom: 1.5rem; font-size: 1.1rem; }
+    .info strong { color: #ff2d2d; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #222; color: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid #ff2d2d; padding: 10px; text-align: left; }
+    th { background: #181818; color: #ff2d2d; font-weight: 700; text-transform: uppercase; }
+    .total { text-align: right; font-size: 1.3rem; font-weight: bold; color: #ff2d2d; margin-top: 1.5rem; }
+    .no-print { margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; }
+    .no-print button, .no-print a { background: #ff2d2d; color: #fff; border: none; border-radius: 8px; padding: 0.7rem 1.5rem; font-size: 1rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: background 0.2s; }
+    .no-print button:hover, .no-print a:hover { background: #fff; color: #ff2d2d; }
+    @media print { .no-print { display: none; } body { background: #fff; color: #000; } .container { box-shadow: none; border: none; background: #fff; color: #000; } th, td { border: 1px solid #ccc; color: #000; } h2, .brand-header .brand-main, .brand-header .brand-accent { color: #000 !important; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" />
+      <div><span class="brand-main">Mr</span><span class="brand-accent">Power</span></div>
+    </div>
+    <h2>Invoice</h2>
+    <div class="info">
+      <strong>Bill #:</strong> <%= bill.BillNumber %><br>
+      <strong>Date:</strong> <%= bill.BillDate ? bill.BillDate.toISOString().slice(0,10) : '' %><br>
+      <strong>Customer:</strong> <%= bill.Customer ? bill.Customer.FullName : '' %><br>
+      <strong>Model:</strong> <%= bill.Model || '' %><br>
+      <strong>VIN:</strong> <%= bill.VIN || '' %><br>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th><th>Qty</th><th>Unit Price</th><th>Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% bill.BillItems.forEach(item => { %>
+          <tr>
+            <td><%= item.Stock ? item.Stock.ItemName : '' %></td>
+            <td><%= item.Quantity %></td>
+            <td><%= item.UnitPrice %></td>
+            <td><%= item.LineTotal %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <div class="total">Total: <%= bill.TotalAmount %></div>
+    <div class="no-print">
+      <button onclick="window.print()">Print</button>
+      <a href="/invoices">Back to Invoices</a>
+    </div>
+  </div>
+</body>
+</html> 

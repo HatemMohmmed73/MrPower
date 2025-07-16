@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Stock Item | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
+      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/invoices">Invoices</a></li>
+      <li><a href="/customers">Customers</a></li>
+      <li><a href="/stock" class="active">Stock</a></li>
+      <li><a href="/reports">Reports</a></li>
+      <li><a href="/admin">Admin Panel</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="dashboard-header">
+      <h2>Edit Stock Item</h2>
+    </div>
+    <div class="dashboard-cards">
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <form method="post" action="/stock/<%= item.StockID %>/edit">
+          <div class="form-group">
+            <label for="ItemName">Item Name</label>
+            <input type="text" id="ItemName" name="ItemName" value="<%= item.ItemName %>" required>
+          </div>
+          <div class="form-group">
+            <label for="Description">Description</label>
+            <input type="text" id="Description" name="Description" value="<%= item.Description %>">
+          </div>
+          <div class="form-group">
+            <label for="Quantity">Quantity</label>
+            <input type="number" id="Quantity" name="Quantity" min="0" value="<%= item.Quantity %>">
+          </div>
+          <div class="form-group">
+            <label for="UnitPrice">Unit Price</label>
+            <input type="number" id="UnitPrice" name="UnitPrice" step="0.01" min="0" value="<%= item.UnitPrice %>">
+          </div>
+          <div class="form-group">
+            <label for="SellPrice">Sell Price</label>
+            <input type="number" id="SellPrice" name="SellPrice" step="0.01" min="0" value="<%= item.SellPrice %>">
+          </div>
+          <button type="submit" class="quick-links" style="width:100%;margin-top:1rem;">Update Item</button>
+        </form>
+        <a href="/stock" class="quick-links" style="margin-top:1rem;display:inline-block;">Back to Stock</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 

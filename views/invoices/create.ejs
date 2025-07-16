@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Invoice | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+  <style>
+    body {
+      background: #000;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+    .fly-modal {
+      background: #181818;
+      border: 2px solid #ff2d2d;
+      border-radius: 18px;
+      box-shadow: 0 2px 24px rgba(255,45,45,0.18);
+      padding: 2.5rem 2.5rem 2rem 2.5rem;
+      min-width: 350px;
+      max-width: 98vw;
+      width: 700px;
+      animation: flyIn 0.4s cubic-bezier(.68,-0.55,.27,1.55);
+      position: relative;
+    }
+    @keyframes flyIn {
+      from { transform: translateY(-60px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .fly-modal h2 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .fly-modal label {
+      color: #fff;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+    .fly-modal input[type="text"],
+    .fly-modal input[type="number"],
+    .fly-modal input[type="email"],
+    .fly-modal select {
+      width: 100%;
+      padding: 0.7rem;
+      border: 2px solid #ff2d2d;
+      border-radius: 8px;
+      background: #222;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1.2rem;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .fly-modal input[type="text"]:focus,
+    .fly-modal input[type="number"]:focus,
+    .fly-modal input[type="email"]:focus,
+    .fly-modal select:focus {
+      border: 2px solid #4f8cff;
+      outline: none;
+      box-shadow: 0 0 0 2px #4f8cff33;
+    }
+    .fly-modal button[type="submit"] {
+      width: 100%;
+      margin-top: 1rem;
+      background: #ff2d2d;
+      color: #fff;
+      padding: 0.8rem 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 8px rgba(255,45,45,0.10);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .fly-modal button[type="submit"]:hover {
+      background: #fff;
+      color: #ff2d2d;
+      box-shadow: 0 4px 16px rgba(255,45,45,0.18);
+    }
+    .fly-modal .back-link {
+      display: inline-block;
+      margin-top: 1.2rem;
+      color: #4f8cff;
+      background: none;
+      border: none;
+      font-weight: 700;
+      text-decoration: underline;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .fly-modal .back-link:hover {
+      color: #ff2d2d;
+      text-decoration: underline;
+    }
+    .item-row { display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; }
+    .item-row input[type='number'] { width: 70px; }
+    .item-row label { min-width: 90px; }
+    .item-row .line-total { min-width: 80px; text-align: right; font-weight: bold; color: #ff2d2d; }
+    .grand-total { font-size: 1.3rem; font-weight: bold; color: #ff2d2d; margin-top: 1rem; text-align: right; }
+    @media (max-width: 900px) {
+      .fly-modal { width: 98vw; min-width: 0; padding: 1.2rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="fly-modal">
+      <h2>Create Invoice</h2>
+      <form method="post" action="/invoices/create" id="invoiceForm">
+        <div class="form-group">
+          <label for="CustomerID">Customer</label>
+          <select id="CustomerID" name="CustomerID" required>
+            <% customers.forEach(c => { %>
+              <option value="<%= c.CustomerID %>"><%= c.FullName %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="BillNumber">Bill Number</label>
+          <input type="text" id="BillNumber" name="BillNumber" required>
+        </div>
+        <div class="form-group">
+          <label for="Model">Model</label>
+          <input type="text" id="Model" name="Model">
+        </div>
+        <div class="form-group">
+          <label for="VIN">VIN</label>
+          <input type="text" id="VIN" name="VIN">
+        </div>
+        <h3 style="color:#ff2d2d;">Items</h3>
+        <div id="itemsContainer">
+          <% stock.forEach(item => { %>
+            <div class="item-row">
+              <input type="checkbox" class="item-check" name="items[<%= item.StockID %>][StockID]" value="<%= item.StockID %>" onchange="toggleItemRow(this)"> <%= item.ItemName %> (Qty: <%= item.Quantity %>, Sell: <%= item.SellPrice %>)
+              <label>Quantity: <input type="number" name="items[<%= item.StockID %>][Quantity]" min="1" value="1" disabled onchange="updateLineTotal(this)"></label>
+              <label>Unit Price: <input type="number" name="items[<%= item.StockID %>][UnitPrice]" step="0.01" min="0" value="<%= item.SellPrice %>" disabled onchange="updateLineTotal(this)"></label>
+              <span class="line-total">0.00</span>
+            </div>
+          <% }) %>
+        </div>
+        <div class="grand-total" id="grandTotal">Grand Total: 0.00</div>
+        <button type="submit">Create Invoice</button>
+      </form>
+      <a href="/invoices" class="back-link">&larr; Back to Invoices</a>
+    </div>
+  </div>
+  <script>
+    function toggleItemRow(checkbox) {
+      const row = checkbox.closest('.item-row');
+      const qty = row.querySelector('input[name$="[Quantity]"]');
+      const price = row.querySelector('input[name$="[UnitPrice]"]');
+      qty.disabled = !checkbox.checked;
+      price.disabled = !checkbox.checked;
+      updateLineTotal(qty);
+    }
+    function updateLineTotal(input) {
+      const row = input.closest('.item-row');
+      const checkbox = row.querySelector('.item-check');
+      if (!checkbox.checked) {
+        row.querySelector('.line-total').textContent = '0.00';
+        updateGrandTotal();
+        return;
+      }
+      const qty = parseFloat(row.querySelector('input[name$="[Quantity]"]').value) || 0;
+      const price = parseFloat(row.querySelector('input[name$="[UnitPrice]"]').value) || 0;
+      const total = qty * price;
+      row.querySelector('.line-total').textContent = total.toFixed(2);
+      updateGrandTotal();
+    }
+    function updateGrandTotal() {
+      let grand = 0;
+      document.querySelectorAll('.item-row').forEach(row => {
+        const checkbox = row.querySelector('.item-check');
+        if (checkbox.checked) {
+          const line = parseFloat(row.querySelector('.line-total').textContent) || 0;
+          grand += line;
+        }
+      });
+      document.getElementById('grandTotal').textContent = 'Grand Total: ' + grand.toFixed(2);
+    }
+    document.querySelectorAll('.item-row input').forEach(input => {
+      input.addEventListener('input', function() { updateLineTotal(this); });
+    });
+    document.querySelectorAll('.item-check').forEach(cb => {
+      cb.addEventListener('change', function() { toggleItemRow(this); });
+    });
+  </script>
+</body>
+</html> 

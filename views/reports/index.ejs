@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
+      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
+    </div>
+    <ul class="sidebar-nav">
+      <% if (permissions.includes('FullAccess')) { %>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/invoices">Invoices</a></li>
+        <li><a href="/customers">Customers</a></li>
+        <li><a href="/stock">Stock</a></li>
+        <li><a href="/reports" class="active">Reports</a></li>
+        <li><a href="/admin">Admin Panel</a></li>
+      <% } else { %>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <% if (permissions.includes('AddInvoice') || permissions.includes('DownloadInvoice') || permissions.includes('PrintInvoice') || permissions.includes('CreateInvoice') || permissions.includes('ManageInvoice')) { %>
+          <li><a href="/invoices">Invoices</a></li>
+        <% } %>
+        <% if (permissions.includes('SearchClient') || permissions.includes('ManageCustomer')) { %>
+          <li><a href="/customers">Customers</a></li>
+        <% } %>
+        <% if (permissions.includes('AddPurchasedItem') || permissions.includes('ManageStock')) { %>
+          <li><a href="/stock">Stock</a></li>
+        <% } %>
+        <% if (permissions.includes('ViewReports')) { %>
+          <li><a href="/reports" class="active">Reports</a></li>
+        <% } %>
+        <% if (permissions.includes('FullAccess')) { %>
+          <li><a href="/admin">Admin Panel</a></li>
+        <% } %>
+      <% } %>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="dashboard-header">
+      <h2>Reports</h2>
+    </div>
+    <div class="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:2rem;">
+      <!-- Stat Cards -->
+      <div class="card stat-card" style="display:flex;align-items:center;gap:1.5rem;">
+        <div style="font-size:2.5rem;color:#4f8cff;"><i class="fas fa-coins"></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#fff;">Total Revenue</div>
+          <div style="font-size:2rem;font-weight:900;color:#ff2d2d;">₹<%= totalSales || 0 %></div>
+        </div>
+      </div>
+      <div class="card stat-card" style="display:flex;align-items:center;gap:1.5rem;">
+        <div style="font-size:2.5rem;color:#4f8cff;"><i class="fas fa-file-invoice"></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#fff;">Total Invoices</div>
+          <div style="font-size:2rem;font-weight:900;color:#ff2d2d;"><%= totalInvoices || 0 %></div>
+        </div>
+      </div>
+      <div class="card stat-card" style="display:flex;align-items:center;gap:1.5rem;">
+        <div style="font-size:2.5rem;color:#4f8cff;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#fff;">Low Stock Items</div>
+          <div style="font-size:2rem;font-weight:900;color:#ff2d2d;"><%= lowStock.length %></div>
+        </div>
+      </div>
+      <!-- Export Buttons -->
+      <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;">
+        <a href="/reports/export/csv" class="btn-primary" style="margin-bottom:1rem;width:80%;text-align:center;">Export CSV</a>
+        <a href="/reports/export/pdf" class="btn-primary" style="width:80%;text-align:center;">Export PDF</a>
+      </div>
+      <!-- Charts Row 1 -->
+      <div class="card" style="grid-column:span 2;">
+        <h3 style="color:#ff2d2d;">Sales by Date (Last 30 Days)</h3>
+        <canvas id="salesByDateChart" height="120"></canvas>
+      </div>
+      <div class="card">
+        <h3 style="color:#ff2d2d;">Sales by Customer</h3>
+        <canvas id="salesByCustomerChart" height="120"></canvas>
+      </div>
+      <div class="card">
+        <h3 style="color:#ff2d2d;">Sales by Item</h3>
+        <canvas id="salesByItemChart" height="120"></canvas>
+      </div>
+      <!-- Low Stock Table -->
+      <div class="card" style="grid-column:span 2;">
+        <h3 style="color:#ff2d2d;">Low Stock Report</h3>
+        <table style="width:100%;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
+          <thead style="background:#222;color:#ff2d2d;"><tr><th>Item</th><th>Quantity</th></tr></thead>
+          <tbody>
+            <% lowStock.forEach(item => { %>
+              <tr><td><%= item.ItemName %></td><td style="color:#ff2d2d;font-weight:bold;"><%= item.Quantity %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script>
+      // Prepare data for charts from EJS variables
+      const salesByDate = <%- JSON.stringify(salesByDate) %>;
+      const salesByCustomer = <%- JSON.stringify(salesByCustomer) %>;
+      const salesByItem = <%- JSON.stringify(salesByItem) %>;
+
+      // Sales by Date (Line Chart)
+      const dateLabels = salesByDate.map(row => row.date);
+      const dateTotals = salesByDate.map(row => Number(row.total));
+      new Chart(document.getElementById('salesByDateChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: dateLabels,
+          datasets: [{
+            label: 'Total Sales',
+            data: dateTotals,
+            borderColor: '#4f8cff',
+            backgroundColor: 'rgba(79,140,255,0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { color: '#fff' } }, y: { ticks: { color: '#fff' } } }
+        }
+      });
+
+      // Sales by Customer (Bar Chart)
+      const customerLabels = salesByCustomer.map(row => row['Customer.FullName'] || row['Customer']?.FullName || row.CustomerID);
+      const customerTotals = salesByCustomer.map(row => Number(row.total));
+      new Chart(document.getElementById('salesByCustomerChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: customerLabels,
+          datasets: [{
+            label: 'Total Sales',
+            data: customerTotals,
+            backgroundColor: '#4f8cff',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { color: '#fff' } }, y: { ticks: { color: '#fff' } } }
+        }
+      });
+
+      // Sales by Item (Pie Chart)
+      const itemLabels = salesByItem.map(row => row['Stock.ItemName'] || row['Stock']?.ItemName || row.StockID);
+      const itemTotals = salesByItem.map(row => Number(row.total));
+      new Chart(document.getElementById('salesByItemChart').getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: itemLabels,
+          datasets: [{
+            label: 'Total Sales',
+            data: itemTotals,
+            backgroundColor: [
+              '#4f8cff', '#ff2d2d', '#fff', '#222', '#181818', '#ff4f4f', '#2a1818', '#4fff8c', '#8c4fff', '#ff8c4f'
+            ]
+          }]
+        },
+        options: {
+          plugins: { legend: { labels: { color: '#fff' } } }
+        }
+      });
+    </script>
+  </div>
+</body>
+</html> 

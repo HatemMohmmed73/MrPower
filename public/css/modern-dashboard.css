@@ -1,0 +1,174 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  background: #181c24;
+  color: #f3f6fa;
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 100vh;
+  background: #202534;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+.sidebar-header {
+  padding: 2rem 1rem 1rem 1.5rem;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #4f8cff;
+  letter-spacing: 2px;
+}
+.sidebar-nav {
+  list-style: none;
+  padding: 0 0 0 0.5rem;
+  margin: 0;
+  flex: 1;
+}
+.sidebar-nav li {
+  margin: 0.5rem 0;
+}
+.sidebar-nav a {
+  display: block;
+  padding: 0.7rem 1.2rem;
+  color: #f3f6fa;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar-nav a.active, .sidebar-nav a:hover {
+  background: #4f8cff;
+  color: #fff;
+}
+
+.main-content {
+  margin-left: 220px;
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-height: 100vh;
+  background: #181c24;
+}
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.dashboard-header h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+.role-badge {
+  background: #232a3b;
+  color: #4f8cff;
+  padding: 0.4rem 1rem;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.dashboard-cards {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.card {
+  background: #232a3b;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  min-width: 260px;
+  flex: 1 1 320px;
+  margin-bottom: 2rem;
+}
+.card h3 {
+  margin-top: 0;
+  color: #4f8cff;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.quick-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.quick-links li {
+  margin: 0.7rem 0;
+}
+.quick-links a {
+  color: #fff;
+  background: #4f8cff;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s;
+  display: inline-block;
+}
+.quick-links a:hover {
+  background: #3766c9;
+}
+.brand-main {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #6ea8ff;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+.brand-accent {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(79,140,255,0.15);
+}
+.brand-logo {
+  display: block;
+  margin: 0 auto 0.5rem auto;
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: contain;
+}
+@media (max-width: 900px) {
+  .dashboard-cards {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .main-content {
+    padding: 1.2rem;
+  }
+}
+@media (max-width: 700px) {
+  .sidebar {
+    width: 100vw;
+    height: auto;
+    flex-direction: row;
+    position: static;
+    box-shadow: none;
+    background: #202534;
+  }
+  .sidebar-header {
+    display: none;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    padding: 0.5rem 0;
+    width: 100vw;
+    justify-content: space-around;
+  }
+  .sidebar-nav li {
+    margin: 0;
+  }
+  .main-content {
+    margin-left: 0;
+    padding-top: 1.5rem;
+  }
+} 

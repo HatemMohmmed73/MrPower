@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
+      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
+    </div>
+    <ul class="sidebar-nav">
+      <% if (permissions.includes('FullAccess')) { %>
+        <li><a href="/dashboard" class="active">Dashboard</a></li>
+        <li><a href="/invoices">Invoices</a></li>
+        <li><a href="/customers">Customers</a></li>
+        <li><a href="/stock">Stock</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/admin">Admin Panel</a></li>
+      <% } else if (user && user.Username === 'Ahmed') { %>
+        <li><a href="/dashboard" class="active">Dashboard</a></li>
+        <li><a href="/invoices">Invoices</a></li>
+        <li><a href="/customers">Customers</a></li>
+        <li><a href="/stock">Stock</a></li>
+        <li><a href="/reports">Reports</a></li>
+      <% } else { %>
+        <li><a href="/dashboard" class="active">Dashboard</a></li>
+        <% if (permissions.includes('AddInvoice') || permissions.includes('DownloadInvoice') || permissions.includes('PrintInvoice') || permissions.includes('CreateInvoice') || permissions.includes('ManageInvoice')) { %>
+          <li><a href="/invoices">Invoices</a></li>
+        <% } %>
+        <% if (permissions.includes('SearchClient') || permissions.includes('ManageCustomer')) { %>
+          <li><a href="/customers">Customers</a></li>
+        <% } %>
+        <% if (permissions.includes('AddPurchasedItem') || permissions.includes('ManageStock')) { %>
+          <li><a href="/stock">Stock</a></li>
+        <% } %>
+        <% if (permissions.includes('ViewReports')) { %>
+          <li><a href="/reports">Reports</a></li>
+        <% } %>
+        <% if (permissions.includes('FullAccess')) { %>
+          <li><a href="/admin">Admin Panel</a></li>
+        <% } %>
+      <% } %>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="dashboard-header">
+      <h2>Welcome, <%= user.Username %>!</h2>
+      <span class="role-badge"><%= user.Role %></span>
+    </div>
+    <% if (permissions.includes('FullAccess') || (user && user.Username === 'Ahmed')) { %>
+      <div class="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:2rem;">
+        <!-- Stat Cards Row -->
+        <div class="card stat-card" style="display:flex;align-items:center;gap:1.5rem;background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;">
+          <div style="font-size:2.5rem;color:#4f8cff;"><i class="fas fa-coins"></i></div>
+          <div>
+            <div style="font-size:1.1rem;color:#fff;">Today's Sales</div>
+            <div style="font-size:2rem;font-weight:900;color:#ff2d2d;">₹<%= todaySales || 0 %></div>
+          </div>
+        </div>
+        <div class="card stat-card" style="display:flex;align-items:center;gap:1.5rem;background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;">
+          <div style="font-size:2.5rem;color:#4f8cff;"><i class="fas fa-file-invoice"></i></div>
+          <div>
+            <div style="font-size:1.1rem;color:#fff;">Today's Invoices</div>
+            <div style="font-size:2rem;font-weight:900;color:#ff2d2d;"><%= todayInvoices || 0 %></div>
+          </div>
+        </div>
+        <div class="card stat-card" style="display:flex;align-items:center;gap:1.5rem;background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;">
+          <div style="font-size:2.5rem;color:#ff2d2d;"><i class="fas fa-exclamation-triangle"></i></div>
+          <div>
+            <div style="font-size:1.1rem;color:#fff;">Low Stock Items</div>
+            <div style="font-size:2rem;font-weight:900;color:#ff2d2d;"><%= lowStock.length %></div>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:2rem;">
+        <div class="card stat-card" style="background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-height:120px;">
+          <h3 style="color:#fff;font-size:1.1rem;margin-bottom:0.5rem;">Notifications</h3>
+          <ul style="color:#fff;list-style:none;padding:0;">
+            <li><span style="color:#ff2d2d;">Low stock alert:</span> <b><%= lowStock.length %></b> items</li>
+            <li><span style="color:#4f8cff;">New invoices today:</span> <b><%= todayInvoices || 0 %></b></li>
+            <li><span style="color:#fff;">System healthy</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:2rem;">
+        <div class="card" style="grid-column:span 2;background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;">
+          <h3 style="color:#ff2d2d;">Sales by Date (Last 30 Days)</h3>
+          <canvas id="salesByDateChart" height="120" style="background:#111;border-radius:12px;"></canvas>
+        </div>
+        <div class="card" style="background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;">
+          <h3 style="color:#ff2d2d;">Sales by Customer</h3>
+          <canvas id="salesByCustomerChart" height="120" style="background:#111;border-radius:12px;"></canvas>
+        </div>
+        <div class="card" style="background:#181818;border:2px solid #ff2d2d;box-shadow:0 2px 16px rgba(255,45,45,0.10);border-radius:18px;">
+          <h3 style="color:#ff2d2d;">Sales by Item</h3>
+          <canvas id="salesByItemChart" height="120" style="background:#111;border-radius:12px;"></canvas>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- Quick Links Widget for non-admins -->
+      <div class="card" style="grid-column:span 2;">
+        <h3 style="color:#ff2d2d;">Quick Links</h3>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+          <% if (permissions.includes('SearchClient') || permissions.includes('ManageCustomer')) { %>
+            <a href="/customers" class="btn-primary">Customers</a>
+          <% } %>
+          <% if (permissions.includes('AddPurchasedItem') || permissions.includes('ManageStock')) { %>
+            <a href="/stock" class="btn-primary">Stock</a>
+          <% } %>
+          <% if (permissions.includes('AddInvoice') || permissions.includes('DownloadInvoice') || permissions.includes('PrintInvoice') || permissions.includes('CreateInvoice') || permissions.includes('ManageInvoice')) { %>
+            <a href="/invoices" class="btn-primary">Invoices</a>
+          <% } %>
+          <% if (permissions.includes('ViewReports')) { %>
+            <a href="/reports" class="btn-primary">Reports</a>
+          <% } %>
+          <% if (permissions.includes('FullAccess')) { %>
+            <a href="/admin" class="btn-primary">Admin Panel</a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+  <% if (permissions.includes('FullAccess') || (user && user.Username === 'Ahmed')) { %>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Sales by Date (Line Chart)
+    const salesByDate = <%- JSON.stringify(salesByDate) %>;
+    const salesByCustomer = <%- JSON.stringify(salesByCustomer) %>;
+    const salesByItem = <%- JSON.stringify(salesByItem) %>;
+    const dateLabels = salesByDate.map(row => row.date);
+    const dateTotals = salesByDate.map(row => Number(row.total));
+    new Chart(document.getElementById('salesByDateChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: dateLabels,
+        datasets: [{
+          label: 'Total Sales',
+          data: dateTotals,
+          borderColor: '#4f8cff',
+          backgroundColor: 'rgba(79,140,255,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { x: { ticks: { color: '#fff' } }, y: { ticks: { color: '#fff' } } }
+      }
+    });
+    // Sales by Customer (Bar Chart)
+    const customerLabels = salesByCustomer.map(row => row['Customer.FullName'] || row['Customer']?.FullName || row.CustomerID);
+    const customerTotals = salesByCustomer.map(row => Number(row.total));
+    new Chart(document.getElementById('salesByCustomerChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: customerLabels,
+        datasets: [{
+          label: 'Total Sales',
+          data: customerTotals,
+          backgroundColor: '#4f8cff',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { x: { ticks: { color: '#fff' } }, y: { ticks: { color: '#fff' } } }
+      }
+    });
+    // Sales by Item (Pie Chart)
+    const itemLabels = salesByItem.map(row => row['Stock.ItemName'] || row['Stock']?.ItemName || row.StockID);
+    const itemTotals = salesByItem.map(row => Number(row.total));
+    new Chart(document.getElementById('salesByItemChart').getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: itemLabels,
+        datasets: [{
+          label: 'Total Sales',
+          data: itemTotals,
+          backgroundColor: [
+            '#4f8cff', '#ff2d2d', '#fff', '#222', '#181818', '#ff4f4f', '#2a1818', '#4fff8c', '#8c4fff', '#ff8c4f'
+          ]
+        }]
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#fff' } } }
+      }
+    });
+  </script>
+  <% } %>
+</body>
+</html> 
