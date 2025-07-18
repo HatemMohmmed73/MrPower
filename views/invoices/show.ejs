@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice | MR Power System</title>
+  <link rel="stylesheet" href="/css/dark.css">
+  <link rel="stylesheet" href="/css/mrpower-theme.css">
+  <style>
+    body {
+      background: rgba(0,0,0,0.85);
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .bill-modal {
+      background: #fff;
+      color: #111;
+      border-radius: 18px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+      padding: 2.5rem 2.5rem 2rem 2.5rem;
+      max-width: 700px;
+      width: 100%;
+      margin: 2rem auto;
+      position: relative;
+    }
+    .bill-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .bill-header .left {
+      font-weight: bold;
+      font-size: 1.1rem;
+      line-height: 1.7;
+    }
+    .bill-header .right {
+      text-align: right;
+      font-size: 1.1rem;
+      line-height: 1.7;
+    }
+    .bill-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+    }
+    .bill-table th, .bill-table td {
+      border: 1px solid #222;
+      padding: 0.5rem 0.7rem;
+      text-align: center;
+    }
+    .bill-table th {
+      background: #eee;
+      font-weight: bold;
+    }
+    .bill-table td.desc {
+      text-align: left;
+    }
+    .bill-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 2rem;
+    }
+    .bill-total {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #222;
+    }
+    .bill-signature {
+      min-width: 180px;
+      border-top: 1px solid #222;
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 1rem;
+    }
+    .bill-note {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      color: #444;
+    }
+    @media print {
+      body { background: #fff !important; }
+      .bill-modal { box-shadow: none; border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bill-modal">
+    <div class="bill-header">
+      <div class="left">
+        <div><b>DATE:</b> <%= bill.BillDate ? bill.BillDate.toISOString().slice(0,10) : '' %></div>
+        <div><b>NAME:</b> <%= bill.Customer ? bill.Customer.FullName : '' %></div>
+        <div><b>MODEL:</b> <%= bill.Model || (bill.Customer && bill.Customer.Model) || '' %></div>
+        <div><b>VIN:</b> <%= bill.VIN || (bill.Customer && bill.Customer.VIN) || '' %></div>
+        <div><b>PHONE:</b> <%= bill.Customer ? bill.Customer.Phone : '' %></div>
+      </div>
+    </div>
+    <table class="bill-table">
+      <thead>
+        <tr>
+          <th>NO:</th>
+          <th>DESCRIPTION</th>
+          <th>UNIT PRICE</th>
+          <th>QTY</th>
+          <th>PRICE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% bill.BillItems.forEach(function(item, idx) { %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td class="desc"><%= item.Stock ? item.Stock.ItemName : '' %></td>
+            <td><%= item.UnitPrice %></td>
+            <td><%= item.Quantity %></td>
+            <td><%= item.LineTotal %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <div class="bill-footer">
+      <div class="bill-total">
+        TOTAL : <%= bill.TotalAmount %> د.ع
+      </div>
+      <div class="bill-signature">
+        SIGNATURE:
+        <br><br><br>
+      </div>
+    </div>
+    <div class="bill-note">
+      NOTE:
+    </div>
+  </div>
+</body>
+</html> 

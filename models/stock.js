@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Stock.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
     ItemName: DataTypes.STRING,
     Description: DataTypes.STRING,
     Quantity: DataTypes.INTEGER,

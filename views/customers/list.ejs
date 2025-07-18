@@ -51,9 +51,10 @@
     </div>
     <div class="dashboard-cards">
       <div class="card" style="width:100%;">
-        <form method="get" action="/customers" style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center;">
-          <input type="text" name="q" value="<%= q %>" placeholder="Search by name, phone, or email..." style="flex:1;padding:0.6rem 1rem;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;">
-          <button type="submit" class="btn-primary" style="margin:0;">Search</button>
+        <form method="get" action="/customers" class="search-bar" style="max: width 150px; margin-left:auto; margin-right:0;">
+          <span class="search-icon"><i class="fas fa-search"></i></span>
+          <input type="text" name="q" value="<%= q %>" placeholder="Search by phone number...">
+          <button type="submit" class="btn-primary">Search</button>
         </form>
         <table style="width:100%;margin-top:1rem;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
           <thead style="background:#222;color:#ff2d2d;">
@@ -75,13 +76,17 @@
                 <td><%= c.Phone %></td>
                 <td><%= c.Email %></td>
                 <td><%= c.Address %></td>
-                <td><a href="/customers/<%= c.CustomerID %>/billing" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Billing History</a></td>
+                <td><a href="/customers/<%= c.id %>/billing" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Billing History</a></td>
                 <% if (permissions && (permissions.includes('ManageCustomer') || permissions.includes('FullAccess'))) { %>
                   <td>
-                    <a href="/customers/<%= c.CustomerID %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
-                    <form action="/customers/<%= c.CustomerID %>/delete" method="post" style="display:inline;">
-                      <button type="submit" class="btn-danger" style="margin-left:0.5rem;padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this customer? This will also delete related bills.');">Delete</button>
-                    </form>
+                    <% if (c.id) { %>
+                      <div style="display:flex;gap:0.5rem;justify-content:center;align-items:center;">
+                        <a href="/customers/<%= c.id %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
+                        <form action="/customers/<%= c.id %>/delete" method="post" style="display:inline;">
+                          <button type="submit" class="btn-danger" style="padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this customer? This will also delete related bills.');">Delete</button>
+                        </form>
+                      </div>
+                    <% } %>
                   </td>
                 <% } %>
               </tr>

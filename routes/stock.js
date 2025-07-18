@@ -52,14 +52,14 @@ router.get('/:id/edit', ensureLoggedIn, hasPermission('ManageStock'), async (req
 // Edit stock item POST
 router.post('/:id/edit', ensureLoggedIn, hasPermission('ManageStock'), async (req, res) => {
   const { ItemName, Description, Quantity, UnitPrice, SellPrice } = req.body;
-  await Stock.update({ ItemName, Description, Quantity, UnitPrice, SellPrice }, { where: { StockID: req.params.id } });
+  await Stock.update({ ItemName, Description, Quantity, UnitPrice, SellPrice }, { where: { id: req.params.id } });
   req.flash('success_msg', 'Stock item updated!');
   res.redirect('/stock');
 });
 
 // Delete stock item
 router.post('/:id/delete', ensureLoggedIn, hasPermission('ManageStock'), async (req, res) => {
-  await Stock.destroy({ where: { StockID: req.params.id } });
+  await Stock.destroy({ where: { id: req.params.id } });
   req.flash('success_msg', 'Stock item deleted!');
   res.redirect('/stock');
 });

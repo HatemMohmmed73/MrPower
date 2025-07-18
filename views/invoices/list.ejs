@@ -51,9 +51,9 @@
     </div>
     <div class="dashboard-cards">
       <div class="card" style="width:100%;">
-        <form method="get" action="/invoices" style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center;">
-          <input type="text" name="q" value="<%= q %>" placeholder="Search by bill number..." style="flex:1;padding:0.6rem 1rem;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;">
-          <button type="submit" class="btn-primary" style="margin:0;">Search</button>
+        <form method="get" action="/invoices" class="search-bar" style="max-width:220px; margin-left:auto; margin-right:0;">
+          <span class="search-icon"><i class="fas fa-search"></i></span>
+          <input type="text" name="q" value="<%= q %>" placeholder="Search by bill number...">
         </form>
         <table style="width:100%;margin-top:1rem;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
           <thead style="background:#222;color:#ff2d2d;">
@@ -75,19 +75,17 @@
                 <td><%= bill.TotalAmount %></td>
                 <td><%= bill.Status %></td>
                 <td>
-                  <% if (permissions && (permissions.includes('ManageInvoice') || permissions.includes('FullAccess'))) { %>
-                    <a href="/invoices/<%= bill.BillID %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
-                  <% } %>
-                  <% if (permissions && (permissions.includes('DownloadInvoice') || permissions.includes('FullAccess'))) { %>
-                    <a href="/invoices/<%= bill.BillID %>/download" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Download</a>
-                  <% } %>
-                  <% if (permissions && (permissions.includes('PrintInvoice') || permissions.includes('FullAccess'))) { %>
-                    <a href="/invoices/<%= bill.BillID %>/print" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Print</a>
-                  <% } %>
-                  <% if (permissions && permissions.includes('DeleteInvoice') && user.Username !== 'Ahmed') { %>
-                    <form action="/invoices/<%= bill.BillID %>/delete" method="post" style="display:inline;">
-                      <button type="submit" class="btn-danger" style="margin-left:0.5rem;padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this invoice?');">Delete</button>
-                    </form>
+                  <% if (bill.id) { %>
+                    <div style="display:flex;gap:0.5rem;justify-content:center;align-items:center;">
+                      <!-- <a href="/invoices/<%= bill.id %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a> -->
+                      <a href="/invoices/<%= bill.id %>/print" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Print</a>
+                      <a href="/invoices/<%= bill.id %>" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Show</a>
+                      <% if (permissions && permissions.includes('FullAccess')) { %>
+                        <form action="/invoices/<%= bill.id %>/delete" method="post" style="display:inline;">
+                          <button type="submit" class="btn-danger" style="padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this invoice?');">Delete</button>
+                        </form>
+                      <% } %>
+                    </div>
                   <% } %>
                 </td>
               </tr>

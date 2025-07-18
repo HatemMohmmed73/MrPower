@@ -83,7 +83,7 @@ module.exports = {
     // Insert BillItems
     await queryInterface.bulkInsert('BillItems', [
       {
-        BillID: bills[0].id,
+        billId: bills[0].id,
         StockID: stocks[0].id,
         Quantity: 2,
         UnitPrice: 2500.00,
@@ -92,7 +92,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        BillID: bills[1].id,
+        billId: bills[1].id,
         StockID: stocks[1].id,
         Quantity: 1,
         UnitPrice: 1800.00,

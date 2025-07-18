@@ -51,9 +51,9 @@
     </div>
     <div class="dashboard-cards">
       <div class="card" style="width:100%;">
-        <form method="get" action="/stock" style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center;">
-          <input type="text" name="q" value="<%= q %>" placeholder="Search by item name..." style="flex:1;padding:0.6rem 1rem;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;">
-          <button type="submit" class="btn-primary" style="margin:0;">Search</button>
+        <form method="get" action="/stock" class="search-bar" style="max-width:220px; margin-left:auto; margin-right:0;">
+          <span class="search-icon"><i class="fas fa-search"></i></span>
+          <input type="text" name="q" value="<%= q %>" placeholder="Search by item name...">
         </form>
         <table style="width:100%;margin-top:1rem;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
           <thead style="background:#222;color:#ff2d2d;">
@@ -83,10 +83,14 @@
                 <td><%= item.SellPrice %></td>
                 <% if (permissions && (permissions.includes('ManageStock') || permissions.includes('AddPurchasedItem') || permissions.includes('FullAccess'))) { %>
                   <td>
-                    <a href="/stock/<%= item.StockID %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
-                    <form action="/stock/<%= item.StockID %>/delete" method="post" style="display:inline;">
-                      <button type="submit" class="btn-danger" style="margin-left:0.5rem;padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this item?');">Delete</button>
-                    </form>
+                    <% if (item.id) { %>
+                      <div style="display:flex;gap:0.5rem;justify-content:center;align-items:center;">
+                        <a href="/stock/<%= item.id %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
+                        <form action="/stock/<%= item.id %>/delete" method="post" style="display:inline;">
+                          <button type="submit" class="btn-danger" style="padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this item?');">Delete</button>
+                        </form>
+                      </div>
+                    <% } %>
                   </td>
                 <% } %>
               </tr>

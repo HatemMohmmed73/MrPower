@@ -6,55 +6,96 @@
   <title>Edit Stock Item | MR Power System</title>
   <link rel="stylesheet" href="/css/dark.css">
   <link rel="stylesheet" href="/css/mrpower-theme.css">
+  <style>
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+    .fly-modal {
+      background: #181818;
+      border: 2px solid #ff2d2d;
+      border-radius: 18px;
+      box-shadow: 0 2px 24px rgba(255,45,45,0.18);
+      padding: 2.5rem 2.5rem 2rem 2.5rem;
+      min-width: 350px;
+      max-width: 95vw;
+      width: 400px;
+      animation: flyIn 0.4s cubic-bezier(.68,-0.55,.27,1.55);
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 28px;
+      height: 28px;
+      font-size: 1.1rem;
+      color: #fff;
+      background: #ff2d2d;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+    }
+    .close-btn:hover {
+      background: #c40000;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <img src="/images/logo.PNG" alt="MrPower Logo" class="brand-logo" />
-      <span class="brand-main">Mr</span><span class="brand-accent">Power</span>
-    </div>
-    <ul class="sidebar-nav">
-      <li><a href="/dashboard">Dashboard</a></li>
-      <li><a href="/invoices">Invoices</a></li>
-      <li><a href="/customers">Customers</a></li>
-      <li><a href="/stock" class="active">Stock</a></li>
-      <li><a href="/reports">Reports</a></li>
-      <li><a href="/admin">Admin Panel</a></li>
-      <li><a href="/logout">Logout</a></li>
-    </ul>
-  </div>
-  <div class="main-content">
-    <div class="dashboard-header">
-      <h2>Edit Stock Item</h2>
-    </div>
-    <div class="dashboard-cards">
-      <div class="card" style="max-width: 500px; margin: 0 auto;">
-        <form method="post" action="/stock/<%= item.StockID %>/edit">
-          <div class="form-group">
-            <label for="ItemName">Item Name</label>
-            <input type="text" id="ItemName" name="ItemName" value="<%= item.ItemName %>" required>
-          </div>
-          <div class="form-group">
-            <label for="Description">Description</label>
-            <input type="text" id="Description" name="Description" value="<%= item.Description %>">
-          </div>
-          <div class="form-group">
-            <label for="Quantity">Quantity</label>
-            <input type="number" id="Quantity" name="Quantity" min="0" value="<%= item.Quantity %>">
-          </div>
-          <div class="form-group">
-            <label for="UnitPrice">Unit Price</label>
-            <input type="number" id="UnitPrice" name="UnitPrice" step="0.01" min="0" value="<%= item.UnitPrice %>">
-          </div>
-          <div class="form-group">
-            <label for="SellPrice">Sell Price</label>
-            <input type="number" id="SellPrice" name="SellPrice" step="0.01" min="0" value="<%= item.SellPrice %>">
-          </div>
-          <button type="submit" class="quick-links" style="width:100%;margin-top:1rem;">Update Item</button>
-        </form>
-        <a href="/stock" class="quick-links" style="margin-top:1rem;display:inline-block;">Back to Stock</a>
-      </div>
+  <div class="modal-overlay">
+    <div class="fly-modal">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h2 style="text-align:center;">Edit Stock Item</h2>
+      <form method="post" action="/stock/<%= item.id %>/edit">
+        <div class="form-group">
+          <label for="ItemName">Item Name</label>
+          <input type="text" id="ItemName" name="ItemName" value="<%= item.ItemName %>" required>
+        </div>
+        <div class="form-group">
+          <label for="Description">Description</label>
+          <input type="text" id="Description" name="Description" value="<%= item.Description %>">
+        </div>
+        <div class="form-group">
+          <label for="Quantity">Quantity</label>
+          <input type="number" id="Quantity" name="Quantity" value="<%= item.Quantity %>" required>
+        </div>
+        <div class="form-group">
+          <label for="UnitPrice">Unit Price</label>
+          <input type="number" id="UnitPrice" name="UnitPrice" value="<%= item.UnitPrice %>" required>
+        </div>
+        <div class="form-group">
+          <label for="SellPrice">Sell Price</label>
+          <input type="number" id="SellPrice" name="SellPrice" value="<%= item.SellPrice %>" required>
+        </div>
+        <div style="text-align:right;margin-top:2rem;">
+          <button type="submit" class="btn-primary">Update Item</button>
+        </div>
+      </form>
     </div>
   </div>
+  <script>
+    function closeModal() {
+      window.history.back();
+    }
+  </script>
 </body>
 </html> 

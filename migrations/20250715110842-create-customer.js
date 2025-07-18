@@ -21,8 +21,11 @@ module.exports = {
       Address: {
         type: Sequelize.STRING
       },
-      CreatedAt: {
-        type: Sequelize.DATE
+      Model: {
+        type: Sequelize.STRING
+      },
+      VIN: {
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
@@ -35,6 +38,9 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
+    // Remove Model and VIN columns if they exist (for safety)
+    await queryInterface.removeColumn('Customers', 'Model');
+    await queryInterface.removeColumn('Customers', 'VIN');
     await queryInterface.dropTable('Customers');
   }
 };

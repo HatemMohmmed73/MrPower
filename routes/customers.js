@@ -23,7 +23,7 @@ function hasPermission(permission) {
 router.get('/', ensureLoggedIn, hasPermission('SearchClient'), async (req, res) => {
   const q = req.query.q || '';
   const customers = await Customer.findAll({
-    where: q ? { FullName: { [require('sequelize').Op.iLike]: `%${q}%` } } : undefined,
+    where: q ? { Phone: { [require('sequelize').Op.iLike]: `%${q}%` } } : undefined,
     order: [['createdAt', 'DESC']]
   });
   res.render('customers/list', { customers, q });
@@ -36,9 +36,12 @@ router.get('/add', ensureLoggedIn, hasPermission('ManageCustomer'), (req, res) =
 
 // Add customer POST
 router.post('/add', ensureLoggedIn, hasPermission('ManageCustomer'), async (req, res) => {
-  const { FullName, Phone, Email, Address } = req.body;
-  await Customer.create({ FullName, Phone, Email, Address });
+  const { FullName, Phone, Email, Address, Model, VIN } = req.body;
+  await Customer.create({ FullName, Phone, Email, Address, Model, VIN });
   req.flash('success_msg', 'Customer added!');
+  if (req.query.from === 'invoice') {
+    return res.redirect('/invoices/create');
+  }
   res.redirect('/customers');
 });
 
@@ -51,8 +54,8 @@ router.get('/:id/edit', ensureLoggedIn, hasPermission('ManageCustomer'), async (
 
 // Edit customer POST
 router.post('/:id/edit', ensureLoggedIn, hasPermission('ManageCustomer'), async (req, res) => {
-  const { FullName, Phone, Email, Address } = req.body;
-  await Customer.update({ FullName, Phone, Email, Address }, { where: { id: req.params.id } });
+  const { FullName, Phone, Email, Address, Model, VIN } = req.body;
+  await Customer.update({ FullName, Phone, Email, Address, Model, VIN }, { where: { id: req.params.id } });
   req.flash('success_msg', 'Customer updated!');
   res.redirect('/customers');
 });

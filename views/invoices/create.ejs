@@ -22,6 +22,8 @@
       align-items: center;
       justify-content: center;
       animation: fadeIn 0.3s;
+      overflow-y: auto;
+      max-height: 100vh;
     }
     @keyframes fadeIn {
       from { opacity: 0; } to { opacity: 1; }
@@ -37,6 +39,8 @@
       width: 700px;
       animation: flyIn 0.4s cubic-bezier(.68,-0.55,.27,1.55);
       position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     @keyframes flyIn {
       from { transform: translateY(-60px) scale(0.95); opacity: 0; }
@@ -132,15 +136,19 @@
       <form method="post" action="/invoices/create" id="invoiceForm">
         <div class="form-group">
           <label for="CustomerID">Customer</label>
-          <select id="CustomerID" name="CustomerID" required>
-            <% customers.forEach(c => { %>
-              <option value="<%= c.CustomerID %>"><%= c.FullName %></option>
-            <% }) %>
-          </select>
+          <div style="display:flex;gap:1rem;align-items:center;">
+            <select id="CustomerID" name="CustomerID" required style="flex:1;">
+              <option value="">Select Customer</option>
+              <% customers.forEach(c => { %>
+                <option value="<%= c.id %>" data-model="<%= c.Model || '' %>" data-vin="<%= c.VIN || '' %>"><%= c.FullName %></option>
+              <% }) %>
+            </select>
+            <a href="/customers/add?from=invoice" class="btn-primary" style="padding:0.5rem 1.2rem;font-size:1rem;">+ Add Customer</a>
+          </div>
         </div>
         <div class="form-group">
           <label for="BillNumber">Bill Number</label>
-          <input type="text" id="BillNumber" name="BillNumber" required>
+          <input type="text" id="BillNumber" name="BillNumber" value="<%= nextBillNumber %>" readonly required>
         </div>
         <div class="form-group">
           <label for="Model">Model</label>
@@ -152,15 +160,9 @@
         </div>
         <h3 style="color:#ff2d2d;">Items</h3>
         <div id="itemsContainer">
-          <% stock.forEach(item => { %>
-            <div class="item-row">
-              <input type="checkbox" class="item-check" name="items[<%= item.StockID %>][StockID]" value="<%= item.StockID %>" onchange="toggleItemRow(this)"> <%= item.ItemName %> (Qty: <%= item.Quantity %>, Sell: <%= item.SellPrice %>)
-              <label>Quantity: <input type="number" name="items[<%= item.StockID %>][Quantity]" min="1" value="1" disabled onchange="updateLineTotal(this)"></label>
-              <label>Unit Price: <input type="number" name="items[<%= item.StockID %>][UnitPrice]" step="0.01" min="0" value="<%= item.SellPrice %>" disabled onchange="updateLineTotal(this)"></label>
-              <span class="line-total">0.00</span>
-            </div>
-          <% }) %>
+          <!-- Item rows will be added here by JS -->
         </div>
+        <button type="button" id="addItemBtn" style="width:100%;margin:1rem 0 0.5rem 0;background:#222;color:#ff2d2d;border:2px dashed #ff2d2d;">+ Add Item</button>
         <div class="grand-total" id="grandTotal">Grand Total: 0.00</div>
         <button type="submit">Create Invoice</button>
       </form>
@@ -168,44 +170,69 @@
     </div>
   </div>
   <script>
-    function toggleItemRow(checkbox) {
-      const row = checkbox.closest('.item-row');
-      const qty = row.querySelector('input[name$="[Quantity]"]');
-      const price = row.querySelector('input[name$="[UnitPrice]"]');
-      qty.disabled = !checkbox.checked;
-      price.disabled = !checkbox.checked;
-      updateLineTotal(qty);
-    }
-    function updateLineTotal(input) {
-      const row = input.closest('.item-row');
-      const checkbox = row.querySelector('.item-check');
-      if (!checkbox.checked) {
-        row.querySelector('.line-total').textContent = '0.00';
+    // Stock data for dropdowns
+    const stock = <%- JSON.stringify(stock) %>;
+    let itemIndex = 0;
+    function addItemRow() {
+      const container = document.getElementById('itemsContainer');
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <select name="items[
+        ${itemIndex}
+        ][StockID]" class="item-select" required style="max-width:220px;margin-right:1rem;">
+          <option value="">Select Item</option>
+          ${stock.map(item => `<option value="${item.id}" data-price="${item.SellPrice}" data-qty="${item.Quantity}">${item.ItemName} (Qty: ${item.Quantity}, Sell: ${item.SellPrice})</option>`).join('')}
+        </select>
+        <label>Quantity: <input type="number" name="items[${itemIndex}][Quantity]" min="1" value="1" style="width:70px;" required></label>
+        <label>Unit Price: <input type="number" name="items[${itemIndex}][UnitPrice]" step="0.01" min="0" value="0" style="width:90px;" required></label>
+        <span class="line-total">0.00</span>
+        <button type="button" class="remove-item" style="background:none;color:#ff2d2d;font-size:1.5rem;border:none;cursor:pointer;">&times;</button>
+      `;
+      container.appendChild(row);
+      const select = row.querySelector('.item-select');
+      const qtyInput = row.querySelector(`input[name="items[${itemIndex}][Quantity]"]`);
+      const priceInput = row.querySelector(`input[name="items[${itemIndex}][UnitPrice]"]`);
+      const lineTotal = row.querySelector('.line-total');
+      select.addEventListener('change', function() {
+        const selected = select.options[select.selectedIndex];
+        priceInput.value = selected.getAttribute('data-price') || 0;
+        qtyInput.value = 1;
+        updateLineTotal();
+      });
+      qtyInput.addEventListener('input', updateLineTotal);
+      priceInput.addEventListener('input', updateLineTotal);
+      row.querySelector('.remove-item').addEventListener('click', function() {
+        row.remove();
         updateGrandTotal();
-        return;
+      });
+      function updateLineTotal() {
+        const qty = parseFloat(qtyInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const total = qty * price;
+        lineTotal.textContent = total.toFixed(2);
+        updateGrandTotal();
       }
-      const qty = parseFloat(row.querySelector('input[name$="[Quantity]"]').value) || 0;
-      const price = parseFloat(row.querySelector('input[name$="[UnitPrice]"]').value) || 0;
-      const total = qty * price;
-      row.querySelector('.line-total').textContent = total.toFixed(2);
-      updateGrandTotal();
+      itemIndex++;
     }
     function updateGrandTotal() {
       let grand = 0;
       document.querySelectorAll('.item-row').forEach(row => {
-        const checkbox = row.querySelector('.item-check');
-        if (checkbox.checked) {
-          const line = parseFloat(row.querySelector('.line-total').textContent) || 0;
-          grand += line;
-        }
+        const line = parseFloat(row.querySelector('.line-total').textContent) || 0;
+        grand += line;
       });
       document.getElementById('grandTotal').textContent = 'Grand Total: ' + grand.toFixed(2);
     }
-    document.querySelectorAll('.item-row input').forEach(input => {
-      input.addEventListener('input', function() { updateLineTotal(this); });
-    });
-    document.querySelectorAll('.item-check').forEach(cb => {
-      cb.addEventListener('change', function() { toggleItemRow(this); });
+    document.getElementById('addItemBtn').addEventListener('click', addItemRow);
+    // Add one item row by default
+    addItemRow();
+    // Autofill Model and VIN when customer is selected
+    document.getElementById('CustomerID').addEventListener('change', function() {
+      var selected = this.options[this.selectedIndex];
+      var model = selected.getAttribute('data-model') || '';
+      var vin = selected.getAttribute('data-vin') || '';
+      document.getElementById('Model').value = model;
+      document.getElementById('VIN').value = vin;
     });
   </script>
 </body>

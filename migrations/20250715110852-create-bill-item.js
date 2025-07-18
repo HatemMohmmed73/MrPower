@@ -9,7 +9,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      BillID: {
+      billId: {
         type: Sequelize.INTEGER
       },
       StockID: {
