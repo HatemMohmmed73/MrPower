@@ -71,7 +71,7 @@ router.post('/:id/delete', ensureLoggedIn, hasPermission('ManageCustomer'), asyn
 router.get('/:id/billing', ensureLoggedIn, hasPermission('SearchClient'), async (req, res) => {
   const customer = await Customer.findByPk(req.params.id);
   if (!customer) return res.redirect('/customers');
-  const bills = await Bill.findAll({ where: { CustomerID: customer.CustomerID }, order: [['BillDate', 'DESC']] });
+  const bills = await Bill.findAll({ where: { CustomerID: customer.id }, order: [['BillDate', 'DESC']] });
   res.render('customers/billing', { customer, bills });
 });
 

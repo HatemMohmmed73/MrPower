@@ -30,6 +30,14 @@ app.use(session({
 }));
 app.use(flash());
 
+// Prevent caching of protected pages
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 // Flash messages middleware
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash('success_msg');
@@ -79,7 +87,8 @@ app.post('/login', async (req, res) => {
         'AddPurchasedItem',
         'CreateInvoice',
         'ManageInvoice',
-        'ViewReports'
+        'ViewReports',
+        'ManageStock'
       ];
     }
     req.session.user = {

@@ -32,7 +32,7 @@ router.get('/', ensureLoggedIn, (req, res, next) => {
 }, async (req, res) => {
   const q = req.query.q || '';
   const bills = await Bill.findAll({
-    where: q ? { BillNumber: { [Op.iLike]: `%${q}%` } } : undefined,
+    where: q ? { id: { [Op.eq]: Number(q) } } : undefined,
     include: [Customer],
     order: [['BillDate', 'DESC']]
   });
@@ -42,20 +42,21 @@ router.get('/', ensureLoggedIn, (req, res, next) => {
 // Create invoice form
 router.get('/create', ensureLoggedIn, hasPermission('AddInvoice'), async (req, res) => {
   const customers = await Customer.findAll();
-  const stock = await Stock.findAll();
-  // Get the latest bill number and increment
-  const lastBill = await Bill.findOne({ order: [['createdAt', 'DESC']] });
-  let nextBillNumber = '1001';
-  if (lastBill && lastBill.BillNumber && !isNaN(Number(lastBill.BillNumber))) {
-    nextBillNumber = String(Number(lastBill.BillNumber) + 1);
-  }
-  res.render('invoices/create', { customers, stock, nextBillNumber });
+  // Only get stock items with quantity greater than 0
+  const stock = await Stock.findAll({
+    where: {
+      Quantity: {
+        [require('sequelize').Op.gt]: 0
+      }
+    }
+  });
+  res.render('invoices/create', { customers, stock });
 });
 
 // Create invoice POST
 router.post('/create', ensureLoggedIn, hasPermission('AddInvoice'), async (req, res) => {
   console.log('POST /invoices/create body:', req.body, 'session:', req.session.user);
-  const { CustomerID, BillNumber, Model, VIN, items } = req.body;
+  const { CustomerID, Model, VIN, items } = req.body;
   const userID = req.session.user && req.session.user.UserID;
   const customerIdInt = parseInt(CustomerID, 10);
   if (!customerIdInt) {
@@ -80,7 +81,6 @@ router.post('/create', ensureLoggedIn, hasPermission('AddInvoice'), async (req, 
   const bill = await Bill.create({
     CustomerID: customerIdInt,
     UserID: userID,
-    BillNumber,
     Model,
     VIN,
     Status: 'paid',
@@ -129,35 +129,124 @@ router.get('/:id/print', ensureLoggedIn, async (req, res) => {
 
 // Download invoice PDF
 router.get('/:id/download', ensureLoggedIn, hasPermission('DownloadInvoice'), async (req, res) => {
-  const bill = await Bill.findByPk(req.params.id, { include: [Customer, { model: BillItem, include: [Stock] }] });
-  if (!bill) return res.status(404).send('Invoice not found');
-  const doc = new PDFDocument();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=invoice-${bill.BillNumber || bill.id}.pdf`);
-  doc.pipe(res);
-  doc.fontSize(20).text('Invoice', { align: 'center' });
-  doc.moveDown();
-  doc.fontSize(12).text(`Bill #: ${bill.BillNumber}`);
-  doc.text(`Date: ${bill.BillDate ? bill.BillDate.toISOString().slice(0,10) : ''}`);
-  doc.text(`Customer: ${bill.Customer ? bill.Customer.FullName : ''}`);
-  doc.text(`Model: ${bill.Model || ''}`);
-  doc.text(`VIN: ${bill.VIN || ''}`);
-  doc.moveDown();
-  doc.text('Items:');
-  doc.moveDown(0.5);
-  doc.font('Helvetica-Bold').text('Name', 50, doc.y, { continued: true });
-  doc.text('Qty', 200, doc.y, { continued: true });
-  doc.text('Unit Price', 250, doc.y, { continued: true });
-  doc.text('Line Total', 350, doc.y);
-  doc.font('Helvetica');
-  bill.BillItems.forEach(item => {
-    doc.text(item.Stock ? item.Stock.ItemName : '', 50, doc.y, { continued: true });
-    doc.text(item.Quantity, 200, doc.y, { continued: true });
-    doc.text(item.UnitPrice, 250, doc.y, { continued: true });
-    doc.text(item.LineTotal, 350, doc.y);
+  const bill = await Bill.findByPk(req.params.id, { 
+    include: [
+      Customer, 
+      { model: BillItem, as: 'BillItems', include: [Stock] }
+    ]
   });
-  doc.moveDown();
-  doc.font('Helvetica-Bold').text(`Total: ${bill.TotalAmount}`, { align: 'right' });
+  if (!bill) return res.status(404).send('Invoice not found');
+  const doc = new PDFDocument({ size: 'A4', margin: 30 });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename=invoice-${bill.id}.pdf`);
+  doc.pipe(res);
+
+  // --- Header with Logo, Company Name, and Invoice Number ---
+  const logoX = 30, logoY = 40, logoW = 120, logoH = 80;
+  try {
+    doc.image('public/images/invoicelogo.png', logoX, logoY, { width: logoW, height: logoH });
+  } catch (e) {}
+
+  // Company name and tagline to the right of the logo
+  const headerLeft = logoX + logoW + 20;
+  const headerTop = logoY + 10;
+  doc.fontSize(24).font('Helvetica-Bold').text('MR POWER', headerLeft, headerTop, { continued: false });
+  doc.fontSize(14).font('Helvetica').text('VEHICLE REPAIR & MAINTENANCE', headerLeft, doc.y + 2);
+
+  // Invoice number at top right
+  doc.fontSize(18).fillColor('#e53935').font('Helvetica-Bold').text(`INVOICE : ${bill.id}`, 400, logoY, { align: 'right' });
+  doc.fillColor('#000');
+
+  // --- Customer & Vehicle Info Block ---
+  let infoY = logoY + logoH + 10;
+  doc.font('Helvetica-Bold').fontSize(12);
+  const infoBlock = [
+    ['DATE:', bill.BillDate ? bill.BillDate.toISOString().slice(0,10).split('-').reverse().join('/') : ''],
+    ['NAME:', bill.Customer ? bill.Customer.FullName : ''],
+    ['MODEL:', bill.Model || (bill.Customer && bill.Customer.Model) || ''],
+    ['VIN:', bill.VIN || (bill.Customer && bill.Customer.VIN) || '0'],
+    ['PHONE:', bill.Customer ? bill.Customer.Phone : '']
+  ];
+  infoBlock.forEach(([label, value]) => {
+    doc.text(label, 30, infoY, { continued: true }).font('Helvetica').text(value, { continued: false });
+    infoY = doc.y + 5;
+    doc.font('Helvetica-Bold');
+  });
+  doc.moveDown(1);
+
+  // --- Items Table ---
+  const tableTop = infoY + 10;
+  const col = {
+    no: 30,
+    desc: 70,
+    unit: 300,
+    qty: 390,
+    total: 470
+  };
+  // Table Header
+  doc.font('Helvetica-Bold').fontSize(11);
+  doc.rect(30, tableTop, 510, 24).fillAndStroke('#e0e0e0', '#bbb');
+  doc.fillColor('#000');
+  doc.text('NO:', col.no, tableTop + 6, { width: 35, align: 'center' });
+  doc.text('DESCRIPTION', col.desc, tableTop + 6, { width: 220, align: 'left' });
+  doc.text('UNIT PRICE', col.unit, tableTop + 6, { width: 80, align: 'right' });
+  doc.text('QTY', col.qty, tableTop + 6, { width: 50, align: 'center' });
+  doc.text('PRICE', col.total, tableTop + 6, { width: 70, align: 'right' });
+  // Draw vertical borders for header
+  doc.moveTo(col.desc, tableTop).lineTo(col.desc, tableTop + 24).stroke('#bbb');
+  doc.moveTo(col.unit, tableTop).lineTo(col.unit, tableTop + 24).stroke('#bbb');
+  doc.moveTo(col.qty, tableTop).lineTo(col.qty, tableTop + 24).stroke('#bbb');
+  doc.moveTo(col.total, tableTop).lineTo(col.total, tableTop + 24).stroke('#bbb');
+  doc.moveTo(30, tableTop + 24).lineTo(540, tableTop + 24).stroke('#bbb');
+
+  // Table Rows
+  let y = tableTop + 24;
+  doc.font('Helvetica').fontSize(10);
+  if (bill.BillItems && bill.BillItems.length > 0) {
+    bill.BillItems.forEach((item, idx) => {
+      doc.rect(30, y, 510, 20).fill('#fff').stroke('#eee');
+      doc.fillColor('#000');
+      doc.text(idx + 1, col.no, y + 6, { width: 35, align: 'center' });
+      doc.text(item.Stock ? item.Stock.ItemName : '', col.desc, y + 6, { width: 220, align: 'left' });
+      doc.text(Number(item.UnitPrice).toFixed(3), col.unit, y + 6, { width: 80, align: 'right' });
+      doc.text(item.Quantity, col.qty, y + 6, { width: 50, align: 'center' });
+      doc.text(Number(item.LineTotal).toFixed(3), col.total, y + 6, { width: 70, align: 'right' });
+      // Draw vertical borders for each row
+      doc.moveTo(col.desc, y).lineTo(col.desc, y + 20).stroke('#eee');
+      doc.moveTo(col.unit, y).lineTo(col.unit, y + 20).stroke('#eee');
+      doc.moveTo(col.qty, y).lineTo(col.qty, y + 20).stroke('#eee');
+      doc.moveTo(col.total, y).lineTo(col.total, y + 20).stroke('#eee');
+      y += 20;
+    });
+  } else {
+    doc.rect(30, y, 510, 20).fill('#fff').stroke('#eee');
+    doc.fillColor('#000');
+    doc.text('No items found.', col.desc, y + 6, { width: 220, align: 'left' });
+    doc.moveTo(col.desc, y).lineTo(col.desc, y + 20).stroke('#eee');
+    doc.moveTo(col.unit, y).lineTo(col.unit, y + 20).stroke('#eee');
+    doc.moveTo(col.qty, y).lineTo(col.qty, y + 20).stroke('#eee');
+    doc.moveTo(col.total, y).lineTo(col.total, y + 20).stroke('#eee');
+    y += 20;
+  }
+
+  // --- Total & Signature ---
+  y += 20;
+  doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
+  doc.text(`TOTAL : ${Number(bill.TotalAmount).toFixed(3)} OMR`, 30, y, { width: 250, align: 'left' });
+  doc.text('SIGNATURE:', 320, y, { width: 220, align: 'right' });
+
+  // --- Notes Section at Bottom ---
+  const pageHeight = doc.page.height - doc.page.margins.bottom;
+  let noteY = pageHeight - 80;
+  doc.font('Helvetica').fontSize(10).fillColor('#000');
+  doc.text('NOTE:', 30, noteY, { align: 'center', width: 510 });
+  noteY += 15;
+  doc.font('Helvetica-Bold').text('THANK YOU FOR YOUR VISIT', 30, noteY, { align: 'center', width: 510 });
+  noteY += 15;
+  doc.font('Helvetica').text('+968 92025455   90606776', 30, noteY, { align: 'center', width: 510 });
+  noteY += 15;
+  doc.text('Nizwa Karsha industrial', 30, noteY, { align: 'center', width: 510 });
+
   doc.end();
 });
 

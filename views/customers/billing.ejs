@@ -5,28 +5,313 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Billing History | MR Power System</title>
   <link rel="stylesheet" href="/css/dark.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.8);
+      font-family: Arial, sans-serif;
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .billing-container {
+      max-width: 90vw;
+      max-height: 90vh;
+      width: 1200px;
+      background: #2a2a2a;
+      border-radius: 12px;
+      border: 1px solid #444;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background: #2a2a2a;
+      padding: 1.5rem;
+      border-bottom: 2px solid #e53935;
+      z-index: 10;
+    }
+    
+    .close-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+    
+    .close-button:hover {
+      background: #c62828;
+    }
+    
+    .billing-title {
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0;
+      margin-right: 50px;
+    }
+    
+    .customer-info {
+      color: #ccc;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .modal-content {
+      padding: 1.5rem;
+    }
+    
+    .billing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      background: #333;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      table-layout: fixed;
+    }
+    
+    .billing-table th {
+      background: #e53935;
+      color: #fff;
+      padding: 0.6rem 0.4rem;
+      text-align: left;
+      font-weight: bold;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .billing-table td {
+      padding: 0.6rem 0.4rem;
+      border-bottom: 1px solid #444;
+      color: #fff;
+      font-size: 0.8rem;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 0;
+    }
+    
+    .billing-table tr:hover {
+      background: #3a3a3a;
+      transition: background 0.2s ease;
+    }
+    
+    .billing-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .bill-number {
+      color: #e53935;
+      font-weight: bold;
+    }
+    
+    .bill-amount {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    
+    .bill-status {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .status-paid {
+      background: #4caf50;
+      color: #fff;
+    }
+    
+    .status-pending {
+      background: #ff9800;
+      color: #fff;
+    }
+    
+    .status-unpaid {
+      background: #f44336;
+      color: #fff;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.7rem 1.2rem;
+      background: #e53935;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+    
+    .back-link:hover {
+      background: #c62828;
+      transform: translateY(-1px);
+    }
+    
+    .no-bills {
+      text-align: center;
+      padding: 3rem;
+      color: #888;
+      font-size: 1.1rem;
+    }
+    
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+      background: #333;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #444;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #e53935;
+      margin-bottom: 0.3rem;
+    }
+    
+    .stat-label {
+      color: #ccc;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 768px) {
+      .billing-container {
+        max-width: 95vw;
+        width: 95vw;
+        margin: 1rem;
+      }
+      
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Billing History for <%= customer.FullName %></h2>
-    <table style="width:100%;margin-top:1rem;">
-      <thead>
-        <tr>
-          <th>Bill #</th><th>Date</th><th>Status</th><th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% bills.forEach(bill => { %>
-          <tr>
-            <td><%= bill.BillNumber %></td>
-            <td><%= bill.BillDate ? bill.BillDate.toISOString().slice(0,10) : '' %></td>
-            <td><%= bill.Status %></td>
-            <td><%= bill.TotalAmount %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-    <a href="/customers">Back to Customers</a>
+  <div class="modal-overlay">
+    <div class="billing-container">
+      <div class="modal-header">
+        <button class="close-button" onclick="window.close()">×</button>
+        <h2 class="billing-title">Billing History for <%= customer.FullName %></h2>
+        <div class="customer-info">
+          Phone: <%= customer.Phone %> | Model: <%= customer.Model || 'N/A' %> | VIN: <%= customer.VIN || 'N/A' %>
+        </div>
+      </div>
+      
+      <div class="modal-content">
+        <% if (bills && bills.length > 0) { %>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-number"><%= bills.length %></div>
+              <div class="stat-label">Total Bills</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number"><%= bills.filter(b => b.Status === 'paid').length %></div>
+              <div class="stat-label">Paid Bills</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number"><%= bills.reduce((sum, b) => sum + parseFloat(b.TotalAmount || 0), 0).toFixed(3) %> OMR</div>
+              <div class="stat-label">Total Revenue</div>
+            </div>
+          </div>
+          
+          <table class="billing-table">
+            <thead>
+              <tr>
+                <th style="width: 15%;">Bill #</th>
+                <th style="width: 20%;">Date</th>
+                <th style="width: 25%;">Amount</th>
+                <th style="width: 20%;">Status</th>
+                <th style="width: 20%;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% bills.forEach(bill => { %>
+                <tr>
+                  <td class="bill-number"><%= bill.id %></td>
+                  <td><%= bill.BillDate ? bill.BillDate.toISOString().slice(0,10).split('-').reverse().join('/') : '' %></td>
+                  <td class="bill-amount"><%= Number(bill.TotalAmount).toFixed(3) %> OMR</td>
+                  <td>
+                    <span class="bill-status status-<%= bill.Status || 'pending' %>">
+                      <%= bill.Status || 'pending' %>
+                    </span>
+                  </td>
+                  <td style="white-space: nowrap;">
+                    <a href="/invoices/<%= bill.id %>/print" target="_blank" style="color: #e53935; text-decoration: none; margin-right: 8px; font-size: 0.75rem;">Print</a>
+                    <a href="/invoices/<%= bill.id %>/download" style="color: #4caf50; text-decoration: none; font-size: 0.75rem;">PDF</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <div class="no-bills">
+            <h3>No billing history found</h3>
+            <p>This customer has no bills yet.</p>
+          </div>
+        <% } %>
+        
+        <a href="/customers" class="back-link">← Back to Customers</a>
+      </div>
+    </div>
   </div>
+  
+  <script>
+    // Close modal when clicking outside
+    document.querySelector('.modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) {
+        window.close();
+      }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.close();
+      }
+    });
+  </script>
 </body>
 </html> 

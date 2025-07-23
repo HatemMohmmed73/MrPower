@@ -21,7 +21,6 @@ module.exports = (sequelize, DataTypes) => {
     BillDate: DataTypes.DATE,
     Status: DataTypes.STRING,
     TotalAmount: DataTypes.DECIMAL,
-    BillNumber: DataTypes.STRING,
     Model: DataTypes.STRING,
     VIN: DataTypes.STRING
   }, {

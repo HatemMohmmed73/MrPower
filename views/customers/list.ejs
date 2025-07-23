@@ -6,6 +6,125 @@
   <title>Customers | MR Power System</title>
   <link rel="stylesheet" href="/css/dark.css">
   <link rel="stylesheet" href="/css/mrpower-theme.css">
+  <style>
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      background: #333;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      table-layout: fixed;
+    }
+    .invoice-table th {
+      background: #e53935;
+      color: #fff;
+      padding: 0.8rem;
+      text-align: left;
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    .invoice-table td {
+      padding: 0.8rem;
+      border-bottom: 1px solid #444;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 0;
+    }
+    .invoice-table tr:hover {
+      background: #3a3a3a;
+      transition: background 0.2s ease;
+    }
+    .invoice-table tr:last-child td {
+      border-bottom: none;
+    }
+    .action-links {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .action-links a {
+      color: #2196f3;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: bold;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+    .action-links a.billing-link {
+      color: #e53935;
+    }
+    .action-links a.edit-link {
+      color: #4caf50;
+    }
+    .action-links a:hover {
+      background: rgba(33, 150, 243, 0.1);
+    }
+    .action-links button {
+      background: transparent;
+      color: #e53935;
+      border: 2px solid #e53935;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: none;
+      letter-spacing: 0.5px;
+      margin-top: 0;
+      margin-bottom: 0;
+      display: inline-block;
+    }
+    .action-links button:hover {
+      background: #e53935;
+      color: #fff;
+    }
+    .modern-search-bar {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 350px;
+      margin: 1.5rem auto 1rem auto;
+      background: #222;
+      border-radius: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      padding: 0.2rem 1.2rem;
+      border: 2px solid #e53935;
+      transition: border 0.2s;
+    }
+    .modern-search-bar input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      padding: 0.8rem 0;
+      border-radius: 2rem;
+    }
+    .modern-search-bar input[type="text"]::placeholder {
+      color: #aaa;
+      font-weight: normal;
+      opacity: 1;
+    }
+    .modern-search-bar:focus-within {
+      border: 2px solid #ff2d2d;
+    }
+    .modern-search-bar button {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="sidebar">
@@ -51,20 +170,18 @@
     </div>
     <div class="dashboard-cards">
       <div class="card" style="width:100%;">
-        <form method="get" action="/customers" class="search-bar" style="max: width 150px; margin-left:auto; margin-right:0;">
-          <span class="search-icon"><i class="fas fa-search"></i></span>
+        <form method="get" action="/customers" class="modern-search-bar">
           <input type="text" name="q" value="<%= q %>" placeholder="Search by phone number...">
-          <button type="submit" class="btn-primary">Search</button>
         </form>
-        <table style="width:100%;margin-top:1rem;background:#181818;color:#fff;border-radius:12px;overflow:hidden;">
-          <thead style="background:#222;color:#ff2d2d;">
+        <table class="invoice-table">
+          <thead>
             <tr>
               <th>Full Name</th>
               <th>Phone</th>
               <th>Email</th>
               <th>Address</th>
               <th>Billing</th>
-              <% if (permissions && (permissions.includes('ManageCustomer') || permissions.includes('FullAccess'))) { %>
+              <% if (permissions && permissions.includes('FullAccess')) { %>
                 <th>Actions</th>
               <% } %>
             </tr>
@@ -76,14 +193,18 @@
                 <td><%= c.Phone %></td>
                 <td><%= c.Email %></td>
                 <td><%= c.Address %></td>
-                <td><a href="/customers/<%= c.id %>/billing" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Billing History</a></td>
-                <% if (permissions && (permissions.includes('ManageCustomer') || permissions.includes('FullAccess'))) { %>
+                <td>
+                  <div class="action-links">
+                    <a href="/customers/<%= c.id %>/billing" class="billing-link">Billing History</a>
+                  </div>
+                </td>
+                <% if (permissions && permissions.includes('FullAccess')) { %>
                   <td>
                     <% if (c.id) { %>
-                      <div style="display:flex;gap:0.5rem;justify-content:center;align-items:center;">
-                        <a href="/customers/<%= c.id %>/edit" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.95rem;">Edit</a>
+                      <div class="action-links">
+                        <a href="/customers/<%= c.id %>/edit" class="edit-link">Edit</a>
                         <form action="/customers/<%= c.id %>/delete" method="post" style="display:inline;">
-                          <button type="submit" class="btn-danger" style="padding:0.4rem 1rem;font-size:0.95rem;" onclick="return confirm('Delete this customer? This will also delete related bills.');">Delete</button>
+                          <button type="submit" onclick="return confirm('Delete this customer? This will also delete related bills.');">DELETE</button>
                         </form>
                       </div>
                     <% } %>

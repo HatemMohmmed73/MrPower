@@ -23,13 +23,16 @@ function hasPermission(permission) {
 
 // Reports page
 router.get('/', ensureLoggedIn, hasPermission('ViewReports'), async (req, res) => {
+  // Only include real data: bills after 2024-01-01
+  const realDataStart = new Date('2024-01-01');
+
   // Sales summary
-  const totalSales = await Bill.sum('TotalAmount');
-  const totalInvoices = await Bill.count();
+  const totalSales = await Bill.sum('TotalAmount', { where: { BillDate: { [Op.gte]: realDataStart } } });
+  const totalInvoices = await Bill.count({ where: { BillDate: { [Op.gte]: realDataStart } } });
   // Low stock alerts (quantity <= 5)
   const lowStock = await Stock.findAll({ where: { Quantity: { [Op.lte]: 5 } } });
 
-  // Sales breakdown by date (last 30 days)
+  // Sales breakdown by date (last 30 days, but only real data)
   const salesByDate = await Bill.findAll({
     attributes: [
       [fn('DATE', col('BillDate')), 'date'],
@@ -37,11 +40,18 @@ router.get('/', ensureLoggedIn, hasPermission('ViewReports'), async (req, res) =
     ],
     group: [literal('date')],
     order: [[literal('date'), 'DESC']],
-    where: { BillDate: { [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+    where: {
+      BillDate: {
+        [Op.and]: [
+          { [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+          { [Op.gte]: realDataStart }
+        ]
+      }
+    },
     raw: true
   });
 
-  // Sales breakdown by customer
+  // Sales breakdown by customer (only real data)
   const salesByCustomer = await Bill.findAll({
     attributes: [
       'CustomerID',
@@ -51,17 +61,21 @@ router.get('/', ensureLoggedIn, hasPermission('ViewReports'), async (req, res) =
     group: ['Customer.id', 'Bill.CustomerID'],
     order: [[fn('SUM', col('TotalAmount')), 'DESC']],
     raw: true,
-    nest: true
+    nest: true,
+    where: { BillDate: { [Op.gte]: realDataStart } }
   });
 
-  // Sales breakdown by stock item
+  // Sales breakdown by stock item (only real data)
   const salesByItem = await BillItem.findAll({
     attributes: [
       'StockID',
       [fn('SUM', col('LineTotal')), 'total'],
       [fn('SUM', col('BillItem.Quantity')), 'quantity']
     ],
-    include: [{ model: Stock, attributes: ['ItemName'] }],
+    include: [
+      { model: Stock, attributes: ['ItemName'] },
+      { model: Bill, attributes: [], required: true, where: { BillDate: { [Op.gte]: realDataStart } } }
+    ],
     group: ['Stock.id', 'BillItem.StockID'],
     order: [[fn('SUM', col('LineTotal')), 'DESC']],
     raw: true,

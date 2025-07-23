@@ -24,9 +24,6 @@ module.exports = {
       TotalAmount: {
         type: Sequelize.DECIMAL
       },
-      BillNumber: {
-        type: Sequelize.STRING
-      },
       Model: {
         type: Sequelize.STRING
       },
