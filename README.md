@@ -1,15 +1,16 @@
 # MR Power System
 
-A Node.js/Express web application for vehicle repair and maintenance business management. Features include customer management, invoicing, stock management, and reporting.
+MR Power System is a Node.js/Express web application designed for vehicle repair and maintenance business management. It provides an all-in-one solution for managing customers, invoices, stock/parts, and business reporting. The app is suitable for garages, workshops, and service centers looking to digitize their workflow.
 
 ---
 
 ## Features
-- Customer management
-- Invoice creation and PDF export
-- Stock/parts management
-- User authentication and permissions
-- Reporting dashboard
+- Customer management (add, view, billing history)
+- Invoice creation, PDF export, and print
+- Stock/parts management (add, edit, track quantity and prices)
+- User authentication and role-based permissions
+- Reporting dashboard for business insights
+- **Docker support** for easy deployment and local development
 
 ---
 
@@ -35,7 +36,7 @@ NODE_ENV=development
 
 ### 4. Database Setup
 - **Development:** Uses SQLite by default (see `config/config.js`).
-- **Production/Render:** Uses PostgreSQL (see below).
+- **Production:** Recommended to use PostgreSQL (see Docker instructions below).
 
 #### Run Migrations and Seeders
 ```bash
@@ -51,49 +52,33 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Deploying to Render
+## Running with Docker
 
-### 1. Push Your Code to GitHub
+This project includes a `Dockerfile` and `docker-compose.yml` for easy setup with Docker.
 
-### 2. Create a PostgreSQL Database on Render
-- Go to Render dashboard → **New +** → **PostgreSQL**
-- Copy the **Internal Database URL**
+### 1. Build and Start the App
+```bash
+docker-compose up --build
+```
+- This will build the Node.js app and a PostgreSQL database container.
+- The app will be available at [http://localhost:3000](http://localhost:3000)
 
-### 3. Set Up Your Web Service
-- Create a new **Web Service** on Render, connect your repo
-- Set the following environment variables:
-  - `SESSION_SECRET` (your secret)
-  - `DATABASE_URL` (paste the PostgreSQL connection string)
-  - `NODE_ENV=production`
-- Build Command: `npm install`
-- Start Command: `npm start`
+### 2. Database Configuration
+- The default `docker-compose.yml` sets up a PostgreSQL database service named `db`.
+- The app will connect to this database automatically using the environment variables defined in `docker-compose.yml`.
+- You can change the database credentials in `docker-compose.yml` as needed.
 
-### 4. Configure Sequelize for Production
-In `config/config.js`, ensure you have:
-```js
-production: {
-  use_env_variable: 'DATABASE_URL',
-  dialect: 'postgres',
-  protocol: 'postgres',
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  }
-}
+### 3. Running Migrations and Seeders in Docker
+To run migrations and seeders inside the app container:
+```bash
+docker-compose exec app npx sequelize-cli db:migrate
+
+docker-compose exec app npx sequelize-cli db:seed:all
 ```
 
-### 5. Install PostgreSQL Driver
+### 4. Stopping the App
 ```bash
-npm install pg
-```
-
-### 6. Run Migrations/Seeders on Render
-- Use the Render Shell tab, or run locally with `DATABASE_URL` set to your Render DB:
-```bash
-npx sequelize-cli db:migrate --env production
-npx sequelize-cli db:seed:all --env production
+docker-compose down
 ```
 
 ---
